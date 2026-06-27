@@ -233,6 +233,27 @@ The application displays:
 * Raw research collected from Tavily
 
 ---
+## 📸 Application Preview
+
+### Home
+
+![Home](screenshots/01.png)
+
+---
+
+### Critic History
+
+![Critic History](screenshots/02.png)
+
+---
+
+### Final Report
+
+![Final Report](screenshots/03.png)
+
+### Raw Research And Sources
+
+![Raw_Research](screenshots/04.png)
 
 # Future Improvements
 
