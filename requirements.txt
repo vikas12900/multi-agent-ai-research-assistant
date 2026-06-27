@@ -1,0 +1,9 @@
+groq
+langchain
+langchain-community
+ipykernel
+langchain_groq
+tavily-python
+streamlit
+torch
+torchvision
