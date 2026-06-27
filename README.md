@@ -9,8 +9,12 @@ The system follows a modular agent architecture consisting of four specialized a
 * **Editor Agent** – Produces a structured research report and revises it using critic feedback.
 * **Critic Agent** – Evaluates the report and suggests improvements using structured LLM output.
 
----
+## 🚀 Live Demo
 
+**Try it here:**  
+https://multi-agent-ai-research-assistant-n8g8quqzqe9pcpqejvpjen.streamlit.app/
+
+---
 ## Features
 
 * Multi-agent architecture
