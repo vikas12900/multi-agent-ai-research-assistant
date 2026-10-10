@@ -7,7 +7,7 @@ The system follows a modular agent architecture consisting of four specialized a
 * **Planner Agent** – Breaks a research query into focused research tasks.
 * **Researcher Agent** – Retrieves relevant information from the web using the Tavily Search API.
 * **Editor Agent** – Produces a structured research report and revises it using critic feedback.
-* **Critic Agent** – Evaluates the report and suggests improvements using structured LLM output.
+* **Critic Agent** – Scores the report, flags unsupported claims, and suggests improvements using structured LLM output.
 
 ## 🚀 Live Demo
 
@@ -22,8 +22,12 @@ https://multi-agent-ai-research-assistant-n8g8quqzqe9pcpqejvpjen.streamlit.app/
 * Real-time web research
 * Structured report generation
 * AI-powered report evaluation
+* Hallucination check – flags claims not found in the research
 * Iterative self-improvement loop
-* Streamlit web interface
+* Best-draft selection across revisions
+* Streamlit web interface with live settings
+* Benchmark dashboard for evaluation runs
+* Downloadable Markdown reports
 * Structured output using Pydantic
 
 ---
@@ -54,8 +58,8 @@ https://multi-agent-ai-research-assistant-n8g8quqzqe9pcpqejvpjen.streamlit.app/
                           ▼
                    Critic Agent
                           │
-         Structured Evaluation (Score +
-              Improvement Suggestions)
+     Structured Evaluation (Score, Reasoning,
+     Unsupported Claims, Improvements)
                           │
                Score >= Target ?
                  ┌────────┴────────┐
@@ -63,7 +67,7 @@ https://multi-agent-ai-research-assistant-n8g8quqzqe9pcpqejvpjen.streamlit.app/
                 Yes               No
                  │                 │
                  ▼                 ▼
-          Final Report      Editor Revises Report
+       Best-Scoring Draft   Editor Revises Report
                                    │
                                    └──────────────► Critic
 ```
@@ -75,9 +79,13 @@ https://multi-agent-ai-research-assistant-n8g8quqzqe9pcpqejvpjen.streamlit.app/
 * Python
 * Streamlit
 * LangChain
-* Groq API (Llama 3.3 70B Versatile)
+* Groq API
+  * Planner – Qwen 3.8 27B
+  * Editor – GPT-OSS 20B
+  * Critic – GPT-OSS 120B
 * Tavily Search API
 * Pydantic
+* Pandas
 * Python Dotenv
 
 ---
@@ -94,10 +102,16 @@ multi-agent-ai-research-assistant/
 │   ├── editor.py
 │   └── critic.py
 │
+├── evals/
+│   ├── queries.txt
+│   ├── run_benchmark.py
+│   └── result_final.json
+│
+├── screenshots/
 ├── app.py
 ├── pipeline.py
+├── run_eval.py
 ├── requirements.txt
-├── .env.example
 └── README.md
 ```
 
@@ -131,15 +145,15 @@ Future of Quantum Computing
 
 ## 2. Researcher Agent
 
-Each task is independently researched using the **Tavily Search API** with advanced search enabled.
+Each task is independently researched using the **Tavily Search API** with advanced search enabled (top 3 results per task).
 
-The retrieved information is combined into a single research context.
+The retrieved information, along with source URLs, is combined into a single research context.
 
 ---
 
 ## 3. Editor Agent
 
-The Editor Agent transforms the collected research into a well-structured report.
+The Editor Agent transforms the collected research into a well-structured report of up to 600 words, using only facts found in the research.
 
 During later iterations, it also receives feedback from the Critic Agent and revises the report accordingly.
 
@@ -147,24 +161,21 @@ During later iterations, it also receives feedback from the Critic Agent and rev
 
 ## 4. Critic Agent
 
-The Critic Agent evaluates the report using a structured Pydantic schema.
+The Critic Agent evaluates the report against the research notes using a structured Pydantic schema.
 
 Evaluation criteria include:
 
-* Accuracy
-* Completeness
-* Structure
-* Clarity
-* Depth of analysis
-* Supporting evidence
-* Coverage of multiple perspectives
-* Recent information
-* Actionable insights
+* Accuracy – every claim and number must appear in the research
+* Coverage – uses the most important findings
+* Clarity – well organised and easy to follow
+* Usefulness – gives the reader clear takeaways
 
 It returns:
 
-* Quality score
-* List of improvement suggestions
+* Quality score (1–10)
+* One-sentence reasoning for the score
+* List of unsupported claims
+* Up to 3 improvement suggestions
 
 ---
 
@@ -175,7 +186,9 @@ If the report score is below the configured threshold, the report is revised.
 This process repeats until:
 
 * the target score is reached, or
-* the maximum number of iterations is exceeded.
+* the maximum number of revisions is exceeded.
+
+The highest-scoring draft is returned as the final report.
 
 ---
 
@@ -200,6 +213,9 @@ Create a `.env` file
 ```env
 GROQ_API_KEY=your_groq_api_key
 TAVILY_API_KEY=your_tavily_api_key
+
+# Optional: seconds to wait between LLM calls (helps with rate limits)
+LLM_PAUSE_SECONDS=0
 ```
 
 Run the application
@@ -210,15 +226,25 @@ streamlit run app.py
 
 ---
 
+# Configuration
+
+| Setting | Default | Where |
+|---|---|---|
+| Target critic score | 8 | `pipeline.py` / app sidebar |
+| Max revisions | 2 | `pipeline.py` / app sidebar |
+| Pause between LLM calls | 0s | `LLM_PAUSE_SECONDS` in `.env` |
+
+---
+
 # Example Workflow
 
 1. Enter a research topic.
 2. Planner Agent generates three research tasks.
 3. Researcher Agent gathers information from the web.
 4. Editor Agent writes the first draft.
-5. Critic Agent evaluates the report.
+5. Critic Agent evaluates the report and flags unsupported claims.
 6. If required, the Editor revises the report using the critic's suggestions.
-7. The final report and evaluation history are displayed.
+7. The best report and evaluation history are displayed.
 
 ---
 
@@ -226,11 +252,37 @@ streamlit run app.py
 
 The application displays:
 
+* Final score, first-draft score, improvement and number of critic rounds
+* Final research report (downloadable as Markdown)
+* Critic history with score chart, reasoning, unsupported claims and every draft
 * Generated research tasks
-* Critic evaluation history
-* Final quality score
-* Final research report
+* Source links
 * Raw research collected from Tavily
+* Benchmark dashboard comparing evaluation runs
+
+---
+
+# Benchmark
+
+The pipeline is evaluated on 9 real-world research queries (`evals/queries.txt`).
+
+Run a benchmark
+
+```bash
+python -m evals.run_benchmark final
+```
+
+Results are saved to `evals/result_<label>.json` and can be explored in the **Benchmarks** tab of the app.
+
+Latest results (`result_final.json`)
+
+| Metric | Value |
+|---|---|
+| Queries | 9 |
+| Avg first-draft score | 8.56 |
+| Avg final score | 8.78 |
+| Avg critic rounds | 1.3 |
+| Queries with no unsupported claims | 6 / 9 |
 
 ---
 ## 📸 Application Preview
@@ -258,11 +310,11 @@ The application displays:
 # Future Improvements
 
 * Parallel execution of research tasks
-* Citation generation
+* Inline citations in reports
 * PDF report export
 * Source credibility ranking
 * Multi-model support
 * Long-term memory
-* Report version comparison
+* Side-by-side report version comparison
 
 ---
