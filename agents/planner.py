@@ -7,7 +7,7 @@ import json
 load_dotenv()
 
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model="qwen/qwen3.8-27b",
     api_key=os.getenv("GROQ_API_KEY")
 )
 

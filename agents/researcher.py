@@ -10,7 +10,7 @@ def researcher_agent(query:str):
     response = client.search(
         query = query,
         search_depth = "advanced",
-        max_results = 5
+        max_results = 3
     )
 
     content = "\n\n".join(
