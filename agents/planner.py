@@ -1,50 +1,33 @@
 from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage
 from dotenv import load_dotenv
+from pydantic import BaseModel, Field
 import os
-import json
 
 load_dotenv()
 
 llm = ChatGroq(
-    model="qwen/qwen3.8-27b",
-    api_key=os.getenv("GROQ_API_KEY")
+    model="openai/gpt-oss-20b",
+    api_key=os.getenv("GROQ_API_KEY"),
+    max_retries=5
 )
 
+class Plan(BaseModel):
+    tasks: list[str] = Field(description="Exactly 3 short web search queries")
 
 def planner_agent(query: str):
 
     prompt = f"""
-    You are a senior research planner.
+You are a senior research planner.
+Break the user query into exactly 3 web search queries.
+Each query must be short (under 12 words), specific, and cover a different angle.
 
-    Your job is to break a user query into focused research tasks.
-
-    Rules:
-    - Return exactly 3 tasks
-    - Each task should be specific and searchable.
-    - Avoid overlap between tasks.
-    - Return ONLY valid JSON.
-    
-    Format:
-    {{
-        "tasks": [
-            "task 1",
-            "task 2",
-            "task 3"
-        ]
-    }}
-
-    User Query:
-    {query}
-    """
-
-    response = llm.invoke(
-        [HumanMessage(content=prompt)]
-    )
+User query:
+{query}
+"""
 
     try:
-        result = json.loads(response.content)
-        return result["tasks"]
-
-    except Exception:
+        plan = llm.with_structured_output(Plan, method="json_schema").invoke(prompt)
+        return plan.tasks[:3]
+    except Exception as e:
+        print("PLANNER FALLBACK:", type(e).__name__, e)
         return [query]
