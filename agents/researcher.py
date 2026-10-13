@@ -6,11 +6,13 @@ load_dotenv()
 
 client = TavilyClient(api_key = os.getenv("TAVILY_API_KEY"))
 
-def researcher_agent(query:str):
+def researcher_agent(query:str, recent: bool = False):
+    extra = {"topic": "news", "time_range": "month"} if recent else {}
     response = client.search(
         query = query,
         search_depth = "advanced",
-        max_results = 3
+        max_results = 3,
+        **extra
     )
 
     content = "\n\n".join(

@@ -19,7 +19,7 @@ def wait():
 
 
 def run_pipeline(query):
-
+    recent = any(w in query.lower() for w in ["latest", "recent", "news", "today", "this week", "this month"])
     tasks = planner_agent(query)
     print("Tasks:", tasks)
 
@@ -27,7 +27,7 @@ def run_pipeline(query):
 
     all_research = []
     for task in tasks:
-        all_research.append(researcher_agent(task)[:budget])
+        all_research.append(researcher_agent(task, recent)[:budget])
 
     combined_research = "\n\n".join(all_research)
     print("Research characters:", len(combined_research))
