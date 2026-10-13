@@ -1,9 +1,9 @@
 groq
 langchain
-langchain-community
-ipykernel
-langchain_groq
+langchain-groq
+langchain-core
 tavily-python
 streamlit
-torch
-torchvision
+pandas
+pydantic
+python-dotenv

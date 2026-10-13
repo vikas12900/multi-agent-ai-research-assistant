@@ -80,7 +80,7 @@ https://multi-agent-ai-research-assistant-n8g8quqzqe9pcpqejvpjen.streamlit.app/
 * Streamlit
 * LangChain
 * Groq API
-  * Planner – Qwen 3.8 27B
+  * Planner – GPT-OSS 20B
   * Editor – GPT-OSS 20B
   * Critic – GPT-OSS 120B
 * Tavily Search API
@@ -110,7 +110,6 @@ multi-agent-ai-research-assistant/
 ├── screenshots/
 ├── app.py
 ├── pipeline.py
-├── run_eval.py
 ├── requirements.txt
 └── README.md
 ```

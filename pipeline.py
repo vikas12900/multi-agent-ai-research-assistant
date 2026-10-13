@@ -8,6 +8,7 @@ from agents.critic import critic_agent
 
 TARGET_SCORE = 8
 MAX_REVISIONS = 2
+RESEARCH_BUDGET = 8000
 PAUSE = int(os.getenv("LLM_PAUSE_SECONDS", "0"))
 
 
@@ -20,12 +21,15 @@ def wait():
 def run_pipeline(query):
 
     tasks = planner_agent(query)
+    print("Tasks:", tasks)
+
+    budget = RESEARCH_BUDGET // len(tasks)
 
     all_research = []
     for task in tasks:
-        all_research.append(researcher_agent(task))
+        all_research.append(researcher_agent(task)[:budget])
 
-    combined_research = "\n\n".join(all_research)[:8000]
+    combined_research = "\n\n".join(all_research)
     print("Research characters:", len(combined_research))
 
     wait()
@@ -54,14 +58,17 @@ def run_pipeline(query):
             "report": report,
         })
 
-        if score >= TARGET_SCORE:
+        if score >= TARGET_SCORE and not result["unsupported_claims"]:
             status = "converged"
-            print("Target score reached. Stopping.")
+            print("Target reached with no unsupported claims. Stopping.")
             break
 
         if i == MAX_REVISIONS:
             print("No revisions left. Stopping.")
             break
+
+        if not improvements:
+            improvements = ["Improve coverage and clarity using only the research."]
 
         print("Revising report...")
         wait()
@@ -69,9 +76,10 @@ def run_pipeline(query):
             raw_data=combined_research,
             current_report=report,
             improvements=improvements,
+            unsupported=result["unsupported_claims"],
         )
 
-    best = max(history, key=lambda h: h["score"])
+    best = max(history, key=lambda h: (h["score"], -len(h["unsupported_claims"])))
     print(f"Best draft: {best['iteration']} with score {best['score']}")
 
     return {
@@ -80,5 +88,6 @@ def run_pipeline(query):
         "report": best["report"],
         "history": history,
         "final_score": best["score"],
+        "unsupported_claims": best["unsupported_claims"],
         "status": status,
     }

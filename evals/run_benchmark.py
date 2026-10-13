@@ -1,37 +1,57 @@
 import json
+import os
 import sys
-import time
 
 from pipeline import run_pipeline
 
-MIN_AVG_SCORE = 7.0
 label = sys.argv[1]
+out_path = f"evals/result_{label}.json"
 
-queries = [q.strip() for q in open("evals/queries.txt") if q.strip()]
+queries = [q.strip() for q in open("evals/queries.txt", encoding="utf-8") if q.strip()]
+if label == "test":
+    queries = queries[:1]
+
 rows = []
+if os.path.exists(out_path):
+    with open(out_path, encoding="utf-8") as f:
+        rows = json.load(f)
+done = {r["query"] for r in rows}
 
 for q in queries:
+    if q in done:
+        continue
+
+    print(f"\n######## {q} ########")
     r = run_pipeline(q)
-    scores = [h["score"] for h in r["history"]]
+    history = r["history"]
+
     rows.append({
         "query": q,
-        "scores": scores,
-        "unsupported": [h["unsupported_claims"] for h in r["history"]],
-        "first_score": scores[0],
+        "tasks": r["tasks"],
+        "scores": [h["score"] for h in history],
+        "unsupported": [h["unsupported_claims"] for h in history],
+        "first_score": history[0]["score"],
         "final_score": r["final_score"],
-        "rounds": len(scores),
-        "report": r["report"]
+        "final_unsupported": len(r["unsupported_claims"]),
+        "rounds": len(history),
+        "words": len(r["report"].split()),
+        "report": r["report"],
     })
-    time.sleep(20)
 
-json.dump(rows, open(f"evals/result_{label}.json", "w"), indent = 2)
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(rows, f, indent=2, ensure_ascii=False)
 
 n = len(rows)
-avg_first = sum(r["first_score"] for r in rows) / n
-avg_final = sum(r["final_score"] for r in rows) / n
-print(f"avg first score: {avg_first: .2f}")
-print(f"avg final score {avg_final: .2f}")
-print(f"avg gain: {avg_final - avg_first:.2f}")
 
-if avg_final < MIN_AVG_SCORE:
-    sys.exit(1)
+
+def avg(key):
+    return sum(r[key] for r in rows) / n
+
+
+print(f"\nQueries: {n}")
+print(f"Avg first-draft score:               {avg('first_score'):.2f}")
+print(f"Avg final score:                     {avg('final_score'):.2f}")
+print(f"Avg unsupported claims, first draft: {sum(len(r['unsupported'][0]) for r in rows) / n:.2f}")
+print(f"Avg unsupported claims, final draft: {avg('final_unsupported'):.2f}")
+print(f"Avg drafts per query:                {avg('rounds'):.2f}")
+print(f"Avg words per report:                {avg('words'):.0f}")

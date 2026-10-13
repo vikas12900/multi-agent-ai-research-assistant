@@ -7,7 +7,8 @@ load_dotenv()
 
 llm = ChatGroq(
     model="openai/gpt-oss-120b",
-    api_key=os.getenv("GROQ_API_KEY")
+    api_key=os.getenv("GROQ_API_KEY"),
+    max_retries=5,
 )
 
 class CriticResponse(BaseModel):
