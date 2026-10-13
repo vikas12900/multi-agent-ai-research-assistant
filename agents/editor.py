@@ -12,6 +12,14 @@ llm = ChatGroq(
 )
 
 
+def looks_cut_off(text):
+    lines = [line.strip() for line in text.strip().splitlines() if line.strip()]
+    if not lines:
+        return True
+    last = lines[-1]
+    return len(last.split()) < 3 or last[-1] not in '.!?)*"”’'
+
+
 def editor_agent(raw_data, current_report=None, improvements=None, unsupported=None):
 
     if current_report:
@@ -44,5 +52,10 @@ def editor_agent(raw_data, current_report=None, improvements=None, unsupported=N
     Maximum 600 words. Do not use tables.
     """
 
-    response = llm.invoke([HumanMessage(content=prompt)])
+    for attempt in range(2):
+        response = llm.invoke([HumanMessage(content=prompt)])
+        if not looks_cut_off(response.content):
+            break
+        print("Draft looks cut off. Regenerating...")
+
     return response.content
