@@ -15,13 +15,16 @@ llm = ChatGroq(
 class Plan(BaseModel):
     tasks: list[str] = Field(description="Exactly 3 short web search queries")
 
-def planner_agent(query: str):
+def planner_agent(query: str, recent: bool = False):
+
+    date_rule = ""
+    if recent:
+        date_rule = f"Today's date is {date.today():%d %B %Y}. Include the current month and year in the queries."
 
     prompt = f"""
 You are a senior research planner.
 Break the user query into exactly 3 web search queries.
-Today's date is {date.today(): %d %B %Y}.
-If the user asks for latest, recent or current information, include the current month and year in the queries.
+{date_rule}
 Each query must be short (under 12 words), specific, and cover a different angle.
 
 User query:

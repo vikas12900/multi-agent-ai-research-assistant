@@ -20,7 +20,7 @@ def wait():
 
 def run_pipeline(query):
     recent = any(w in query.lower() for w in ["latest", "recent", "news", "today", "this week", "this month"])
-    tasks = planner_agent(query)
+    tasks = planner_agent(query, recent)
     print("Tasks:", tasks)
 
     budget = RESEARCH_BUDGET // len(tasks)
