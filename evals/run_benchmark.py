@@ -36,6 +36,7 @@ for q in queries:
         "rounds": len(history),
         "words": len(r["report"].split()),
         "report": r["report"],
+        "research": r["raw_data"],
     })
 
     with open(out_path, "w", encoding="utf-8") as f:

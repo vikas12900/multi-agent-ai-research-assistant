@@ -72,12 +72,16 @@ def run_pipeline(query):
 
         print("Revising report...")
         wait()
-        report = editor_agent(
+        new_report = editor_agent(
             raw_data=combined_research,
             current_report=report,
             improvements=improvements,
             unsupported=result["unsupported_claims"],
         )
+        if len(new_report.split()) < 100:
+            print("Editor returned an empty or broken draft. Keeping the previous one.")
+            break
+        report = new_report
 
     best = max(history, key=lambda h: (h["score"], -len(h["unsupported_claims"])))
     print(f"Best draft: {best['iteration']} with score {best['score']}")
