@@ -28,43 +28,43 @@ class CriticResponse(BaseModel):
         description = "Specific improvements needed"
     )
 
-def critic_agent(report: str, research: str):
+def critic_agent(report: str, research: str, query:str):
 
-    prompt = f"""
-    You are a senior research reviewer. You are given the research notes and a report written from them.
+    prompt = f"""You are a strict fact-checker reviewing a research report.
 
-    Judge the report on:
-    - Accuracy: every claim and number must appear in the research.
-    - Coverage: it uses the most important findings in the research.
-    - Clarity: it is well organised and easy to follow.
-    - Usefulness: it gives the reader clear takeaways.
-    
-    Keep the reasoning to one sentence.
-    For unsupported claims, paraphrase each one in under 15 words. Do not use quotation marks anywhere in your answer.
+User query:
+{query}
 
-    The report is limited to 600 words. Do not ask for more length.
+Research (the ONLY allowed source of facts):
+{research}
 
-    Scoring rules:
+Report to review:
+{report}
 
-    9-10 = Every claim is supported by the research. Clear, complete, nothing to cut.
-    7-8 = Mostly supported and clear, with one or two weak or unsupported claims.
-    5-6 = Accurate but generic, or misses important findings from the research.
-    3-4 = Several unsupported claims, or poorly organised.
-    1-2 = Inaccurate or off-topic.
+Check the WHOLE report every time. Do not assume earlier versions were checked.
 
-    Give at most 3 improvements, most important first.
-    Each improvement must be something the writer can fix using only the research below.
-    Never ask for sources, data or detail that is not in the research.
-    If a claim is not in the research, say to remove it.
+Go through these checks in order:
 
-    Research:
+1. NUMBERS: Find every number, percentage, date, and amount in the report. Each one must appear in the research. If a number is not in the research, it is unsupported, even if it seems plausible.
 
-    {research}
+2. ATTRIBUTION: Each fact must be credited to the right country, company, study, or source. A real fact credited to the wrong one (e.g. China's figure given as India's, a global result given as a UK result) is unsupported.
 
-    Report:
+3. CLAIMS: Any statement, recommendation, or conclusion not stated in the research is unsupported. This includes advice like "governments should..." unless the research says it.
 
-    {report}
-    """
+4. COVERAGE: Check that the report answers every part of the user query. If the query asks for "pros and cons", "how it works and how much", etc., each part must be covered. Add each missing part to unsupported_claims as "MISSING: <part>".
+
+5. COMPLETENESS: If the report ends mid-sentence or mid-section, add "TRUNCATED" to unsupported_claims.
+
+Scoring rules (follow exactly):
+- Any MISSING or TRUNCATED item: score at most 5.
+- Any wrong number or wrong attribution: score at most 6.
+- 3 or more unsupported claims: score at most 6.
+- 1 or 2 unsupported claims: score at most 8.
+- 9 or 10 only if there are zero unsupported claims and the query is fully answered.
+
+In unsupported_claims, quote the exact claim from the report, briefly.
+In improvements, say exactly what to remove or fix for each item.
+"""
 
     structured_llm = llm.with_structured_output(
         CriticResponse,

@@ -33,7 +33,7 @@ def run_pipeline(query):
     print("Research characters:", len(combined_research))
 
     wait()
-    report = editor_agent(combined_research)
+    report = editor_agent(combined_research, query)
 
     history = []
     status = "max_revisions"
@@ -43,7 +43,7 @@ def run_pipeline(query):
         print(f"\n========== DRAFT {i + 1} ==========")
 
         wait()
-        result = critic_agent(report, combined_research)
+        result = critic_agent(report, combined_research, query)
         score = result["score"]
         improvements = result["improvements"]
 
@@ -74,6 +74,7 @@ def run_pipeline(query):
         wait()
         new_report = editor_agent(
             raw_data=combined_research,
+            query=query,
             current_report=report,
             improvements=improvements,
             unsupported=result["unsupported_claims"],

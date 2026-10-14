@@ -20,7 +20,7 @@ def looks_cut_off(text):
     return len(last.split()) < 3 or last[-1] not in '.!?)*"”’'
 
 
-def editor_agent(raw_data, current_report=None, improvements=None, unsupported=None):
+def editor_agent(raw_data, query, current_report=None, improvements=None, unsupported=None):
 
     if current_report:
         fixes = "\n".join(f"- {p}" for p in (improvements or []))
@@ -28,6 +28,8 @@ def editor_agent(raw_data, current_report=None, improvements=None, unsupported=N
         prompt = f"""
     You are a senior editor.
 
+    User query: {query}
+    Make sure the report answers every part of this query.
     Original Research:
     {raw_data}
 
@@ -46,7 +48,12 @@ def editor_agent(raw_data, current_report=None, improvements=None, unsupported=N
     """
     else:
         prompt = f"""
-    You are a senior editor. Write a clear, well-structured report based on this research:
+    You are a senior editor.
+
+    User query: {query}
+    Make sure the report answers every part of this query.
+
+    Write a clear, well-structured report based on this research:
     {raw_data}
     Use only facts found in the research. Do not add numbers, names or projections that are not in it.
     Maximum 600 words. Do not use tables.
