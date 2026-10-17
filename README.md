@@ -1,4 +1,4 @@
-# ⚡ Multi-Agent AI Research Assistant
+# ⚡ Self-Correcting Research Agent
 
 A multi-agent AI research system that autonomously plans research, performs real-time web search, generates structured reports, critiques its own output, and iteratively refines the report until it reaches a target quality score.
 
@@ -263,7 +263,7 @@ The application displays:
 
 # Benchmark
 
-The pipeline is evaluated on 9 real-world research queries (`evals/queries.txt`).
+The pipeline is evaluated on 25 real-world research queries (`evals/queries.txt`).
 
 Run a benchmark
 
@@ -277,11 +277,11 @@ Latest results (`result_final.json`)
 
 | Metric | Value |
 |---|---|
-| Queries | 9 |
-| Avg first-draft score | 8.56 |
-| Avg final score | 8.78 |
-| Avg critic rounds | 1.3 |
-| Queries with no unsupported claims | 6 / 9 |
+| Queries | 25 |
+| Avg first-draft score | 8.32 |
+| Avg final score | 8.96 |
+| Avg critic rounds | 1.72 |
+| Queries with no unsupported claims | 22 / 25 |
 
 ---
 ## 📸 Application Preview

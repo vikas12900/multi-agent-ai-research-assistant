@@ -11,7 +11,7 @@ import pipeline
 from pipeline import run_pipeline
 
 st.set_page_config(
-    page_title="AI Research Analyst",
+    page_title="Self-Correcting Research Agent",
     page_icon="⚡",
     layout="wide",
 )
@@ -66,7 +66,7 @@ with st.sidebar:
             st.write(f"• {run['query']} — **{run['result']['final_score']}**")
 
 
-st.title("⚡ AI Research Analyst")
+st.title("⚡ Self-Correcting Research Agent")
 st.caption("Multi-agent research: plan, search the web, write, and self-critique.")
 
 analyze_tab, bench_tab = st.tabs(["🔎 Analyze", "📊 Benchmarks"])
@@ -182,10 +182,11 @@ with bench_tab:
     files = sorted(glob.glob("evals/result_*.json"))
 
     if not files:
-        st.info("No benchmark results yet. Run `python evals/run_benchmark.py <label>`.")
+        st.info("No benchmark results yet. Run `python -m evals.run_benchmark <label>`.")
     else:
         names = [os.path.basename(f)[len("result_"):-len(".json")] for f in files]
-        label = st.selectbox("Benchmark run", names, index=len(names) - 1)
+        default = names.index("final") if "final" in names else len(names) - 1
+        label = st.selectbox("Benchmark run", names, index=default)
 
         with open(f"evals/result_{label}.json", encoding="utf-8") as f:
             rows = json.load(f)
